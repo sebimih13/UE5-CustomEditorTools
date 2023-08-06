@@ -10,7 +10,7 @@ void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
 {
 	if (NumOfDuplicates <= 0)
 	{
-		Print(TEXT("Please enter a valid number"), FColor::Red);
+		ShowMsgDialog(EAppMsgType::Ok, TEXT("Please enter a valid number"));
 		return;
 	}
 
@@ -19,22 +19,34 @@ void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
 
 	for (const FAssetData& SelectedAssetData : SelectedAssetsData)
 	{
-		for (int32 i = 0; i < NumOfDuplicates; ++i)
+		int32 RequiredDuplicates = NumOfDuplicates;
+		uint32 CurrentIndexDuplicate = 1;
+
+		while (RequiredDuplicates > 0)
 		{
+			if (CurrentIndexDuplicate <= 0)
+			{
+				ShowMsgDialog(EAppMsgType::Ok, TEXT("Too many duplicates: " + FString::FromInt(RequiredDuplicates) + " haven't been instantiated"));
+				break;
+			}
+
 			const FString SourceAssetPath = SelectedAssetData.ObjectPath.ToString();
-			const FString NewDuplicatedAssetName = SelectedAssetData.AssetName.ToString() + TEXT("_") + FString::FromInt(i + 1);
+			const FString NewDuplicatedAssetName = SelectedAssetData.AssetName.ToString() + TEXT("_") + FString::FromInt(CurrentIndexDuplicate);
 			const FString NewPathName = FPaths::Combine(SelectedAssetData.PackagePath.ToString(), NewDuplicatedAssetName);
 
 			if (UEditorAssetLibrary::DuplicateAsset(SourceAssetPath, NewPathName))
 			{
 				UEditorAssetLibrary::SaveAsset(NewPathName, false);
 				++Counter;
+				--RequiredDuplicates;
 			}
+
+			++CurrentIndexDuplicate;
 		}
 	}
 
 	if (Counter > 0)
 	{
-		Print(TEXT("Successfully duplicated ") + FString::FromInt(Counter) + " files", FColor::Green);
+		ShowNotifyInfo(TEXT("Successfully duplicated " + FString::FromInt(Counter) + " files"));
 	}
 }
