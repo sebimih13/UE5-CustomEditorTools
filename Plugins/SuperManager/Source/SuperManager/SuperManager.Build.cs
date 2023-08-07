@@ -26,10 +26,12 @@ public class SuperManager : ModuleRules
 			new string[]
 			{
 				"Core",
-                "Blutility"
+                "Blutility",
+				"UMG",
+                "Niagara"
             }
 		);
-			
+
 		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
