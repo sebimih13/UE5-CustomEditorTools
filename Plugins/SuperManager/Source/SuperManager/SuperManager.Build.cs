@@ -40,7 +40,8 @@ public class SuperManager : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-                "EditorScriptingUtilities"
+                "EditorScriptingUtilities",
+                "UnrealEd"
             }
 		);
 		
