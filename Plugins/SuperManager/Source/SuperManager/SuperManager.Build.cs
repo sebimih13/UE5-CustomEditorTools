@@ -41,7 +41,9 @@ public class SuperManager : ModuleRules
 				"Slate",
 				"SlateCore",
                 "EditorScriptingUtilities",
-                "UnrealEd"
+                "UnrealEd",
+                "AssetRegistry",
+                "AssetTools"
             }
 		);
 		
