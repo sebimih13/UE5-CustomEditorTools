@@ -28,7 +28,7 @@ public class SuperManager : ModuleRules
 				"Core",
                 "Blutility",
 				"UMG",
-                "Niagara"
+                "Niagara",
             }
 		);
 
@@ -43,7 +43,8 @@ public class SuperManager : ModuleRules
                 "EditorScriptingUtilities",
                 "UnrealEd",
                 "AssetRegistry",
-                "AssetTools"
+                "AssetTools",
+                "ContentBrowser"
             }
 		);
 		

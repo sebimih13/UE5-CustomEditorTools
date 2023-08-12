@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+/** Forward Declarations */
+class FMenuBuilder;
+
 class FSuperManagerModule : public IModuleInterface
 {
 public:
@@ -12,4 +15,21 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+private:
+#pragma region ContentBrowserMenuExtension
+
+	void InitContentBrowserMenuExtension();
+
+	TSharedRef<FExtender> CustomContentBrowserMenuExtender(const TArray<FString>& SelectedPaths);
+	void AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder);
+	
+	void OnDeleteUnusedAssetsButtonClicked();
+	void OnDeleteEmptyFoldersButtonClicked();
+
+	void FixUpRedirectors();
+
+	TArray<FString> FoldersPathSelectedArray;
+
+#pragma endregion
 };
