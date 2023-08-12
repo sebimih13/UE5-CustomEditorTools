@@ -116,6 +116,13 @@ void FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked()
 	if (UnusedAssetsDataArray.Num() > 0)
 	{
 		ObjectTools::DeleteAssets(UnusedAssetsDataArray);
+
+		EAppReturnType::Type DeleteEmptyFoldersResult = DebugHeader::ShowMsgDialog(EAppMsgType::YesNo, TEXT("Would you like to delete the empty folders?"), false);
+		if (ConfirmResult == EAppReturnType::Yes)
+		{
+			//FoldersPathSelectedArray = TArray<FString>().Append();
+			OnDeleteEmptyFoldersButtonClicked();
+		}
 	}
 	else
 	{
@@ -160,7 +167,7 @@ void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
 		TArray<FString> SubfoldersPathArray = UEditorAssetLibrary::ListAssets(FolderPathSelected, false, true);
 		for (const FString& FolderPath : SubfoldersPathArray)
 		{
-			if (!EmptyFoldersPathsArray.Contains(FolderPath))
+			if (!UEditorAssetLibrary::DoesDirectoryExist(FolderPath) || !EmptyFoldersPathsArray.Contains(FolderPath))
 			{
 				bAreAllSubfoldersEmpty = false;
 				break;
