@@ -13,6 +13,7 @@
 void FSuperManagerModule::StartupModule()
 {
 	InitContentBrowserMenuExtension();
+	RegisterAdvancedDeletionTab();
 }
 
 void FSuperManagerModule::ShutdownModule()
@@ -63,6 +64,14 @@ void FSuperManagerModule::AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder)
 		FText::FromString(TEXT("Safely delete all empty folders and subfolders")),
 		FSlateIcon(),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked)
+	);
+
+	// Advanced Deletion
+	MenuBuilder.AddMenuEntry(
+		FText::FromString(TEXT("Advanced Deletion")),
+		FText::FromString(TEXT("List assets by specific conditions in a tab for deleting")),
+		FSlateIcon(),
+		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnAdvancedDeletionButtonClicked)
 	);
 }
 
@@ -120,7 +129,6 @@ void FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked()
 		EAppReturnType::Type DeleteEmptyFoldersResult = DebugHeader::ShowMsgDialog(EAppMsgType::YesNo, TEXT("Would you like to delete the empty folders?"), false);
 		if (ConfirmResult == EAppReturnType::Yes)
 		{
-			//FoldersPathSelectedArray = TArray<FString>().Append();
 			OnDeleteEmptyFoldersButtonClicked();
 		}
 	}
@@ -225,6 +233,11 @@ void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
 	DebugHeader::ShowNotifyInfo(ResultMessage);
 }
 
+void FSuperManagerModule::OnAdvancedDeletionButtonClicked()
+{
+	FGlobalTabmanager::Get()->TryInvokeTab(FName("AdvancedDeletion"));
+}
+
 void FSuperManagerModule::FixUpRedirectors()
 {
 	TArray<UObjectRedirector*> RedirectorsToFixArray;
@@ -250,6 +263,20 @@ void FSuperManagerModule::FixUpRedirectors()
 
 	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
 	AssetToolsModule.Get().FixupReferencers(RedirectorsToFixArray);
+}
+
+#pragma endregion
+
+#pragma region
+
+void FSuperManagerModule::RegisterAdvancedDeletionTab()
+{
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeletion"), FOnSpawnTab::CreateRaw(this, &FSuperManagerModule::OnSpawnAdvancedDeletionTab)).SetDisplayName(FText::FromString(TEXT("Advanced Deletion")));
+}
+
+TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
+{
+	return SNew(SDockTab).TabRole(ETabRole::NomadTab);
 }
 
 #pragma endregion

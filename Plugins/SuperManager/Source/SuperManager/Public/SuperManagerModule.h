@@ -26,10 +26,20 @@ private:
 	
 	void OnDeleteUnusedAssetsButtonClicked();
 	void OnDeleteEmptyFoldersButtonClicked();
+	void OnAdvancedDeletionButtonClicked();
 
 	void FixUpRedirectors();
 
 	TArray<FString> FoldersPathSelectedArray;
 
 #pragma endregion
+
+#pragma region
+
+	void RegisterAdvancedDeletionTab();
+
+	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
+
+#pragma endregion
+
 };
