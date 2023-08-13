@@ -22,6 +22,22 @@ void FSuperManagerModule::ShutdownModule()
 
 }
 
+#pragma region ProcessDataForAdvancedDeletionTab
+
+bool FSuperManagerModule::DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete)
+{
+	TArray<FAssetData> AssetDataForDeletionArray;
+	AssetDataForDeletionArray.Add(AssetDataToDelete);
+
+	if (ObjectTools::DeleteAssets(AssetDataForDeletionArray) > 0)
+	{
+		return true;
+	}
+	return false;
+}
+
+#pragma endregion
+
 #pragma region ContentBrowserMenuExtension
 
 void FSuperManagerModule::InitContentBrowserMenuExtension()
@@ -268,7 +284,7 @@ void FSuperManagerModule::FixUpRedirectors()
 
 #pragma endregion
 
-#pragma region
+#pragma region CustomEditorTab
 
 void FSuperManagerModule::RegisterAdvancedDeletionTab()
 {
