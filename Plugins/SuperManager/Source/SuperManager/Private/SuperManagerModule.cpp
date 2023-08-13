@@ -7,6 +7,7 @@
 #include "ObjectTools.h"
 #include "AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "SlateWidgets/AdvancedDeletionWidget.h"
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
@@ -276,7 +277,39 @@ void FSuperManagerModule::RegisterAdvancedDeletionTab()
 
 TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	return SNew(SDockTab).TabRole(ETabRole::NomadTab);
+	return 
+	SNew(SDockTab).TabRole(ETabRole::NomadTab)
+	[
+		SNew(SAdvancedDeletionTab)
+		.AssetsDataToStoreArray(GetAllAssetsDataUnderSelectedFolder())
+	];
+}
+
+TArray<TSharedPtr<FAssetData>> FSuperManagerModule::GetAllAssetsDataUnderSelectedFolder()
+{
+	TArray<TSharedPtr<FAssetData>> AvailableAssetsDataArray;
+
+	TArray<FString> AssetsPathNameArray = UEditorAssetLibrary::ListAssets(FoldersPathSelectedArray[0]);		// TODO : for all selected folders
+	for (const FString& AssetPathName : AssetsPathNameArray)
+	{
+		// Don't touch the root folder
+		if (AssetPathName.Contains(TEXT("Developers")) || AssetPathName.Contains(TEXT("Collections"))
+			|| AssetPathName.Contains(TEXT("__ExternalActors__")) || AssetPathName.Contains(TEXT("__ExternalObjects__")))
+		{
+			continue;
+		}
+
+		// Verify if the asset exists
+		if (!UEditorAssetLibrary::DoesAssetExist(AssetPathName))
+		{
+			continue;
+		}
+
+		const FAssetData Data = UEditorAssetLibrary::FindAssetData(AssetPathName);
+		AvailableAssetsDataArray.Add(MakeShared<FAssetData>(Data));
+	}
+
+	return AvailableAssetsDataArray;
 }
 
 #pragma endregion

@@ -44,7 +44,8 @@ public class SuperManager : ModuleRules
                 "UnrealEd",
                 "AssetRegistry",
                 "AssetTools",
-                "ContentBrowser"
+                "ContentBrowser",
+				"InputCore"
             }
 		);
 		
