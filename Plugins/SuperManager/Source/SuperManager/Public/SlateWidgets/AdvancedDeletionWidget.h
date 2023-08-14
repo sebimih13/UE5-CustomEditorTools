@@ -44,6 +44,7 @@ private:
 	/** Variables */
 	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ConstructedAssetListView;
 	TArray<TSharedPtr<FAssetData>> StoredAssetsDataArray;
+	TArray<TSharedPtr<FAssetData>> DisplayedAssetsDataArray;
 
 	TArray<TSharedPtr<FAssetData>> AssetsDataToDeleteArray;
 

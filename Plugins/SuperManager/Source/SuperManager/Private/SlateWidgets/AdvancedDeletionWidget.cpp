@@ -8,12 +8,15 @@
 #include "DebugHeader.h"
 
 #define LIST_ALL TEXT("List all available assets")
+#define LIST_UNUSED TEXT("List all unused assets")
 
 void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 {
 	bCanSupportFocus = true;
 
 	StoredAssetsDataArray = InArgs._AssetsDataToStoreArray;
+	DisplayedAssetsDataArray = InArgs._AssetsDataToStoreArray;
+
 	AssetsDataToDeleteArray.Empty();
 	CheckBoxesArray.Empty();
 
@@ -21,6 +24,7 @@ void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 	TitleTextFont.Size = 30;
 
 	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_ALL));
+	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_UNUSED));
 
 	ChildSlot
 	[
@@ -102,7 +106,7 @@ TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeletionTab::ConstructAss
 	ConstructedAssetListView =
 		SNew(SListView<TSharedPtr<FAssetData>>)
 		.ItemHeight(24.0f)
-		.ListItemsSource(&StoredAssetsDataArray)
+		.ListItemsSource(&DisplayedAssetsDataArray)
 		.OnGenerateRow(this, &SAdvancedDeletionTab::OnGenerateRowForList);
 
 	return ConstructedAssetListView.ToSharedRef();
@@ -246,6 +250,11 @@ FReply SAdvancedDeletionTab::OnDeleteButtonClicked(TSharedPtr<FAssetData> Clicke
 			StoredAssetsDataArray.Remove(ClickedAssetData);
 		}
 
+		if (DisplayedAssetsDataArray.Contains(ClickedAssetData))
+		{
+			DisplayedAssetsDataArray.Remove(ClickedAssetData);
+		}
+
 		// Update the list
 		RefreshAssetListView();
 	}
@@ -290,6 +299,11 @@ FReply SAdvancedDeletionTab::OnDeleteAllButtonClicked()
 			if (StoredAssetsDataArray.Contains(DeletedData))
 			{
 				StoredAssetsDataArray.Remove(DeletedData);
+			}
+
+			if (DisplayedAssetsDataArray.Contains(DeletedData))
+			{
+				DisplayedAssetsDataArray.Remove(DeletedData);
 			}
 		}
 
@@ -389,7 +403,20 @@ TSharedRef<SWidget> SAdvancedDeletionTab::OnGenerateComboBoxContent(TSharedPtr<F
 
 void SAdvancedDeletionTab::OnComboBoxSelectionChanged(TSharedPtr<FString> SelectedOption, ESelectInfo::Type InSelectInfo)
 {
-	DebugHeader::Print(*SelectedOption.Get(), FColor::Cyan);
-
 	ComboBoxDisplayTextBlock->SetText(FText::FromString(*SelectedOption.Get()));
+
+	// Pass data for our module to filter based on the selected option
+	if (*SelectedOption.Get() == LIST_ALL)
+	{
+		// List all stored assets
+		DisplayedAssetsDataArray = StoredAssetsDataArray;
+		RefreshAssetListView();
+	}
+	else if (*SelectedOption.Get() == LIST_UNUSED)
+	{
+		// List all unused assets
+		FSuperManagerModule& SuperManagerModule = FModuleManager::LoadModuleChecked<FSuperManagerModule>(TEXT("SuperManager"));
+		SuperManagerModule.ListUnusedAssetsForAssetList(StoredAssetsDataArray, DisplayedAssetsDataArray);
+		RefreshAssetListView();
+	}
 }

@@ -19,6 +19,7 @@ public:
 	/** ProcessDataForAdvancedDeletionTab */
 	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
 	bool DeleteMultipleAssetsForAssetList(const TArray<FAssetData>& AssetsDataToDeleteArray);
+	void ListUnusedAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutUnusedAssetsData);
 
 private:
 	/** ContentBrowserMenuExtension */

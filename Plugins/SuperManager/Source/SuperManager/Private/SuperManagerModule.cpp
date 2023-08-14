@@ -43,6 +43,20 @@ bool FSuperManagerModule::DeleteMultipleAssetsForAssetList(const TArray<FAssetDa
 	return false;
 }
 
+void FSuperManagerModule::ListUnusedAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutUnusedAssetsData)
+{
+	OutUnusedAssetsData.Empty();
+
+	for (const TSharedPtr<FAssetData>& AssetData : AssetsDataToFilter)
+	{
+		TArray<FString> AssetReferences = UEditorAssetLibrary::FindPackageReferencersForAsset(AssetData->ObjectPath.ToString());
+		if (AssetReferences.Num() == 0)
+		{
+			OutUnusedAssetsData.Add(AssetData);
+		}
+	}
+}
+
 void FSuperManagerModule::InitContentBrowserMenuExtension()
 {
 	// Get all menu extenders
@@ -255,6 +269,7 @@ void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
 
 void FSuperManagerModule::OnAdvancedDeletionButtonClicked()
 {
+	FixUpRedirectors();
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("AdvancedDeletion"));
 }
 
