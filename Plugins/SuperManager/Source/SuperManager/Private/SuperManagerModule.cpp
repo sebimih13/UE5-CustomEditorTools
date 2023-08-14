@@ -22,8 +22,6 @@ void FSuperManagerModule::ShutdownModule()
 
 }
 
-#pragma region ProcessDataForAdvancedDeletionTab
-
 bool FSuperManagerModule::DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete)
 {
 	TArray<FAssetData> AssetDataForDeletionArray;
@@ -36,9 +34,14 @@ bool FSuperManagerModule::DeleteSingleAssetForAssetList(const FAssetData& AssetD
 	return false;
 }
 
-#pragma endregion
-
-#pragma region ContentBrowserMenuExtension
+bool FSuperManagerModule::DeleteMultipleAssetsForAssetList(const TArray<FAssetData>& AssetsDataToDeleteArray)
+{
+	if (ObjectTools::DeleteAssets(AssetsDataToDeleteArray) > 0)
+	{
+		return true;
+	}
+	return false;
+}
 
 void FSuperManagerModule::InitContentBrowserMenuExtension()
 {
@@ -282,10 +285,6 @@ void FSuperManagerModule::FixUpRedirectors()
 	AssetToolsModule.Get().FixupReferencers(RedirectorsToFixArray);
 }
 
-#pragma endregion
-
-#pragma region CustomEditorTab
-
 void FSuperManagerModule::RegisterAdvancedDeletionTab()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeletion"), FOnSpawnTab::CreateRaw(this, &FSuperManagerModule::OnSpawnAdvancedDeletionTab)).SetDisplayName(FText::FromString(TEXT("Advanced Deletion")));
@@ -327,8 +326,6 @@ TArray<TSharedPtr<FAssetData>> FSuperManagerModule::GetAllAssetsDataUnderSelecte
 
 	return AvailableAssetsDataArray;
 }
-
-#pragma endregion
 
 #undef LOCTEXT_NAMESPACE
 	

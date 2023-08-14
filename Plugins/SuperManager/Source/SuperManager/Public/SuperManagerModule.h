@@ -16,15 +16,12 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-#pragma region ProcessDataForAdvancedDeletionTab
-
+	/** ProcessDataForAdvancedDeletionTab */
 	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
-
-#pragma endregion
+	bool DeleteMultipleAssetsForAssetList(const TArray<FAssetData>& AssetsDataToDeleteArray);
 
 private:
-#pragma region ContentBrowserMenuExtension
-
+	/** ContentBrowserMenuExtension */
 	void InitContentBrowserMenuExtension();
 
 	TSharedRef<FExtender> CustomContentBrowserMenuExtender(const TArray<FString>& SelectedPaths);
@@ -38,16 +35,8 @@ private:
 
 	TArray<FString> FoldersPathSelectedArray;
 
-#pragma endregion
-
-#pragma region CustomEditorTab
-
+	/** CustomEditorTab */
 	void RegisterAdvancedDeletionTab();
-
 	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
-
 	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
-
-#pragma endregion
-
 };
