@@ -57,6 +57,44 @@ void FSuperManagerModule::ListUnusedAssetsForAssetList(const TArray<TSharedPtr<F
 	}
 }
 
+void FSuperManagerModule::ListSameNameAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutSameNameAssetsData)
+{
+	OutSameNameAssetsData.Empty();
+
+	TMultiMap<FString, TSharedPtr<FAssetData>> AssetsMap;
+	for (const TSharedPtr<FAssetData>& AssetData : AssetsDataToFilter)
+	{
+		AssetsMap.Emplace(AssetData->AssetName.ToString(), AssetData);
+	}
+
+	TArray<FString> MapKeys;
+	AssetsMap.GetKeys(MapKeys);
+
+	for (const FString& Key : MapKeys)
+	{
+		TArray<TSharedPtr<FAssetData>> AssetsDataWithSameNameArray;
+		AssetsMap.MultiFind(Key, AssetsDataWithSameNameArray);
+
+		if (AssetsDataWithSameNameArray.Num() > 1)
+		{
+			for (const TSharedPtr<FAssetData>& AssetData : AssetsDataWithSameNameArray)
+			{
+				if (AssetData.IsValid())
+				{
+					OutSameNameAssetsData.AddUnique(AssetData);
+				}
+			}
+		}
+	}
+}
+
+void FSuperManagerModule::SyncContentBrowserToClickedAssetForAssetList(const FString& AssetPathToSync)
+{
+	TArray<FString> AssetsPathToSync;
+	AssetsPathToSync.Add(AssetPathToSync);
+	UEditorAssetLibrary::SyncBrowserToObjects(AssetsPathToSync);
+}
+
 void FSuperManagerModule::InitContentBrowserMenuExtension()
 {
 	// Get all menu extenders

@@ -3,12 +3,11 @@
 #include "SlateWidgets/AdvancedDeletionWidget.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "SuperManagerModule.h"
-
-// TODO : delete debug
 #include "DebugHeader.h"
 
 #define LIST_ALL TEXT("List all available assets")
 #define LIST_UNUSED TEXT("List all unused assets")
+#define LIST_SAME_NAME TEXT("List all assets with the same name")
 
 void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 {
@@ -23,8 +22,10 @@ void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 	FSlateFontInfo TitleTextFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	TitleTextFont.Size = 30;
 
+	ComboBoxSourceItems.Empty();
 	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_ALL));
 	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_UNUSED));
+	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_SAME_NAME));
 
 	ChildSlot
 	[
@@ -107,7 +108,8 @@ TSharedRef<SListView<TSharedPtr<FAssetData>>> SAdvancedDeletionTab::ConstructAss
 		SNew(SListView<TSharedPtr<FAssetData>>)
 		.ItemHeight(24.0f)
 		.ListItemsSource(&DisplayedAssetsDataArray)
-		.OnGenerateRow(this, &SAdvancedDeletionTab::OnGenerateRowForList);
+		.OnGenerateRow(this, &SAdvancedDeletionTab::OnGenerateRowForList)
+		.OnMouseButtonClick(this, &SAdvancedDeletionTab::OnRowWidgetMouseButtonClicked);
 
 	return ConstructedAssetListView.ToSharedRef();
 }
@@ -169,6 +171,12 @@ TSharedRef<ITableRow> SAdvancedDeletionTab::OnGenerateRowForList(TSharedPtr<FAss
 	return ListViewRowWidget;
 }
 
+void SAdvancedDeletionTab::OnRowWidgetMouseButtonClicked(TSharedPtr<FAssetData> ClickedData)
+{
+	FSuperManagerModule& SuperManagerModule = FModuleManager::LoadModuleChecked<FSuperManagerModule>(TEXT("SuperManager"));
+	SuperManagerModule.SyncContentBrowserToClickedAssetForAssetList(ClickedData->ObjectPath.ToString());
+}
+
 void SAdvancedDeletionTab::RefreshAssetListView()
 {
 	AssetsDataToDeleteArray.Empty();
@@ -205,12 +213,6 @@ void SAdvancedDeletionTab::OnCheckBoxStateChanged(ECheckBoxState NewState, TShar
 
 	case ECheckBoxState::Checked:
 		AssetsDataToDeleteArray.AddUnique(AssetData);
-		break;
-
-	case ECheckBoxState::Undetermined:
-		break;
-
-	default:
 		break;
 	}
 }
@@ -417,6 +419,13 @@ void SAdvancedDeletionTab::OnComboBoxSelectionChanged(TSharedPtr<FString> Select
 		// List all unused assets
 		FSuperManagerModule& SuperManagerModule = FModuleManager::LoadModuleChecked<FSuperManagerModule>(TEXT("SuperManager"));
 		SuperManagerModule.ListUnusedAssetsForAssetList(StoredAssetsDataArray, DisplayedAssetsDataArray);
+		RefreshAssetListView();
+	}
+	else if (*SelectedOption.Get() == LIST_SAME_NAME)
+	{
+		// List all assets with the same name
+		FSuperManagerModule& SuperManagerModule = FModuleManager::LoadModuleChecked<FSuperManagerModule>(TEXT("SuperManager"));
+		SuperManagerModule.ListSameNameAssetsForAssetList(StoredAssetsDataArray, DisplayedAssetsDataArray);
 		RefreshAssetListView();
 	}
 }
