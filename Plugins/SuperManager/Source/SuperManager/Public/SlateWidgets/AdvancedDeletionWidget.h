@@ -37,6 +37,10 @@ private:
 
 	TSharedRef<STextBlock> ConstructTextBlockForTabButtons(const FString& TextContent);
 	
+	TSharedRef<SComboBox<TSharedPtr<FString>>> ConstructComboBox();
+	TSharedRef<SWidget> OnGenerateComboBoxContent(TSharedPtr<FString> SourceItem);
+	void OnComboBoxSelectionChanged(TSharedPtr<FString> SelectedOption, ESelectInfo::Type InSelectInfo);
+
 	/** Variables */
 	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ConstructedAssetListView;
 	TArray<TSharedPtr<FAssetData>> StoredAssetsDataArray;
@@ -44,4 +48,7 @@ private:
 	TArray<TSharedPtr<FAssetData>> AssetsDataToDeleteArray;
 
 	TArray<TSharedRef<SCheckBox>> CheckBoxesArray;
+
+	TArray<TSharedPtr<FString>> ComboBoxSourceItems;
+	TSharedPtr<STextBlock> ComboBoxDisplayTextBlock;
 };

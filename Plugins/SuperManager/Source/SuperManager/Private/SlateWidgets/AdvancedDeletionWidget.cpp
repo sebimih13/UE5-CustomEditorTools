@@ -7,6 +7,8 @@
 // TODO : delete debug
 #include "DebugHeader.h"
 
+#define LIST_ALL TEXT("List all available assets")
+
 void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 {
 	bCanSupportFocus = true;
@@ -17,6 +19,8 @@ void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 
 	FSlateFontInfo TitleTextFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	TitleTextFont.Size = 30;
+
+	ComboBoxSourceItems.Add(MakeShared<FString>(LIST_ALL));
 
 	ChildSlot
 	[
@@ -39,6 +43,13 @@ void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 		.AutoHeight()
 		[
 			SNew(SHorizontalBox)
+
+			// Combo Box Slot
+			+SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				ConstructComboBox()
+			]
 		]
 
 		// 3rd Slot for the asset list
@@ -350,4 +361,35 @@ TSharedRef<STextBlock> SAdvancedDeletionTab::ConstructTextBlockForTabButtons(con
 		.Justification(ETextJustify::Center);
 
 	return ConstructedTextBlock;
+}
+
+TSharedRef<SComboBox<TSharedPtr<FString>>> SAdvancedDeletionTab::ConstructComboBox()
+{
+	TSharedRef<SComboBox<TSharedPtr<FString>>> ConstructedComboBox =
+		SNew(SComboBox<TSharedPtr<FString>>)
+		.OptionsSource(&ComboBoxSourceItems)
+		.OnGenerateWidget(this, &SAdvancedDeletionTab::OnGenerateComboBoxContent)
+		.OnSelectionChanged(this, &SAdvancedDeletionTab::OnComboBoxSelectionChanged)
+		[
+			SAssignNew(ComboBoxDisplayTextBlock, STextBlock)
+			.Text(FText::FromString("List Assets Options"))
+		];
+
+	return ConstructedComboBox;
+}
+
+TSharedRef<SWidget> SAdvancedDeletionTab::OnGenerateComboBoxContent(TSharedPtr<FString> SourceItem)
+{
+	TSharedRef<STextBlock> ConstructedComboBoxText =
+		SNew(STextBlock)
+		.Text(FText::FromString(*SourceItem.Get()));
+
+	return ConstructedComboBoxText;
+}
+
+void SAdvancedDeletionTab::OnComboBoxSelectionChanged(TSharedPtr<FString> SelectedOption, ESelectInfo::Type InSelectInfo)
+{
+	DebugHeader::Print(*SelectedOption.Get(), FColor::Cyan);
+
+	ComboBoxDisplayTextBlock->SetText(FText::FromString(*SelectedOption.Get()));
 }
