@@ -40,6 +40,7 @@ private:
 
 	/** CustomEditorTab */
 	void RegisterAdvancedDeletionTab();
+	void UnregisterAdvancedDeletionTab();
 	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
 	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
 };

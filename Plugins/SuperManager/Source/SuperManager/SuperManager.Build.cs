@@ -45,7 +45,8 @@ public class SuperManager : ModuleRules
                 "AssetRegistry",
                 "AssetTools",
                 "ContentBrowser",
-				"InputCore"
+				"InputCore",
+                "Projects"
             }
 		);
 		

@@ -8,18 +8,21 @@
 #include "AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AdvancedDeletionWidget.h"
+#include "CustomStyle/SuperManagerStyle.h"
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
 void FSuperManagerModule::StartupModule()
 {
+	FSuperManagerStyle::InitializeIcons();
 	InitContentBrowserMenuExtension();
 	RegisterAdvancedDeletionTab();
 }
 
 void FSuperManagerModule::ShutdownModule()
 {
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("AdvancedDeletion"));
+	UnregisterAdvancedDeletionTab();
+	FSuperManagerStyle::Shutdown();
 }
 
 bool FSuperManagerModule::DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete)
@@ -126,7 +129,7 @@ void FSuperManagerModule::AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder)
 	(
 		FText::FromString(TEXT("Delete unused assets")),
 		FText::FromString(TEXT("Safely delete all unused assets under folder")),
-		FSlateIcon(),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.DeleteUnusedAssets"),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked)
 	);
 
@@ -134,7 +137,7 @@ void FSuperManagerModule::AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder)
 	MenuBuilder.AddMenuEntry(
 		FText::FromString(TEXT("Delete empty folders")),
 		FText::FromString(TEXT("Safely delete all empty folders and subfolders")),
-		FSlateIcon(),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.DeleteEmptyFolders"),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked)
 	);
 
@@ -142,7 +145,7 @@ void FSuperManagerModule::AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder)
 	MenuBuilder.AddMenuEntry(
 		FText::FromString(TEXT("Advanced Deletion")),
 		FText::FromString(TEXT("List assets by specific conditions in a tab for deleting")),
-		FSlateIcon(),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.AdvancedDeletion"),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnAdvancedDeletionButtonClicked)
 	);
 }
@@ -340,7 +343,17 @@ void FSuperManagerModule::FixUpRedirectors()
 
 void FSuperManagerModule::RegisterAdvancedDeletionTab()
 {
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeletion"), FOnSpawnTab::CreateRaw(this, &FSuperManagerModule::OnSpawnAdvancedDeletionTab)).SetDisplayName(FText::FromString(TEXT("Advanced Deletion")));
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
+		FName("AdvancedDeletion"), 
+		FOnSpawnTab::CreateRaw(this, &FSuperManagerModule::OnSpawnAdvancedDeletionTab))
+			.SetDisplayName(FText::FromString(TEXT("Advanced Deletion")))
+			.SetIcon(FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.AdvancedDeletion")
+	);
+}
+
+void FSuperManagerModule::UnregisterAdvancedDeletionTab()
+{
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("AdvancedDeletion"));
 }
 
 TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
