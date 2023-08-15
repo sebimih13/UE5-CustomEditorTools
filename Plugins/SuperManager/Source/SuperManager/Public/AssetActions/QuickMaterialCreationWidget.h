@@ -6,6 +6,14 @@
 #include "EditorUtilityWidget.h"
 #include "QuickMaterialCreationWidget.generated.h"
 
+UENUM(BlueprintType)
+enum class EChannelPackingType : uint8
+{
+	ECPT_NoChannelPacking	UMETA(DisplayName = "No Channel Packing"),
+	ECPT_ORM				UMETA(DisplayName = "Occlusion-Roughness-Metallic"),
+	ECPT_MAX				UMETA(DisplayName = "DefaultMAX")
+};
+
 /**
  * 
  */
@@ -19,6 +27,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void CreateMaterialFromSelectedTextures();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
+	EChannelPackingType ChannelPackingType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
 	bool bCustomMaterialName;
@@ -41,11 +52,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
 	TArray<FString> AmbientOcclusionArray;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> ORMArray;
+
 private:
 	bool ProcessSelectedData(const TArray<FAssetData>& SelectedDataToProcessArray, TArray<UTexture2D*>& OutSelectedTexturesArray, FString& OutSelectedTexturePackagePath);
 	bool CheckIsNameUsed(const FString& FolderPathToCheck, const FString& MaterialNameToCheck);
 	UMaterial* CreateMaterialAsset(const FString& NewMaterialAssetName, const FString& MaterialPath);
+
 	void DefaultCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter);
+	void ORMCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter);
 
 	/** Connect the required pins */
 	bool TryConnectBaseColor(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial);
@@ -53,6 +69,7 @@ private:
 	bool TryConnectRoughness(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial);
 	bool TryConnectNormal(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial);
 	bool TryConnectAmbientOcclusion(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial);
+	bool TryConnectORM(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial);
 };
 
 // TODO : const la pointers

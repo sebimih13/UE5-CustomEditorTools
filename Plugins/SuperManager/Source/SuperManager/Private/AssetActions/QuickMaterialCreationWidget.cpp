@@ -10,6 +10,7 @@
 UQuickMaterialCreationWidget::UQuickMaterialCreationWidget()
 	: bCustomMaterialName(true)
 	, MaterialName(TEXT("M_"))
+	, ChannelPackingType(EChannelPackingType::ECPT_NoChannelPacking)
 {
 	// Default values for Base Color Array
 	BaseColorArray.Add(TEXT("_BaseColor"));
@@ -35,6 +36,11 @@ UQuickMaterialCreationWidget::UQuickMaterialCreationWidget()
 	AmbientOcclusionArray.Add(TEXT("_AmbientOcclusion"));
 	AmbientOcclusionArray.Add(TEXT("_AmbientOcclusionMap"));
 	AmbientOcclusionArray.Add(TEXT("_AO"));
+
+	// Default values for ORM
+	ORMArray.Add(TEXT("_arm"));
+	ORMArray.Add(TEXT("_OcclusionRoughnessMetallic"));
+	ORMArray.Add(TEXT("_ORM"));
 }
 
 void UQuickMaterialCreationWidget::CreateMaterialFromSelectedTextures()
@@ -77,7 +83,23 @@ void UQuickMaterialCreationWidget::CreateMaterialFromSelectedTextures()
 			continue;
 		}
 
-		DefaultCreateMaterialNodes(CreatedMaterial, SelectedTexture, PinsConnectedCounter);
+		switch (ChannelPackingType)
+		{
+		case EChannelPackingType::ECPT_NoChannelPacking:
+			DefaultCreateMaterialNodes(CreatedMaterial, SelectedTexture, PinsConnectedCounter);
+			break;
+
+		case EChannelPackingType::ECPT_ORM:
+			ORMCreateMaterialNodes(CreatedMaterial, SelectedTexture, PinsConnectedCounter);
+			break;
+
+		case EChannelPackingType::ECPT_MAX:
+			break;
+
+		default:
+			break;
+		}
+
 	}
 
 	if (PinsConnectedCounter > 0)
@@ -85,6 +107,7 @@ void UQuickMaterialCreationWidget::CreateMaterialFromSelectedTextures()
 		DebugHeader::ShowNotifyInfo(TEXT("Successfully connected ") + FString::FromInt(PinsConnectedCounter) + TEXT(" pins"));
 	}
 
+	// Reset MaterialName
 	MaterialName = TEXT("M_");
 }
 
@@ -213,6 +236,44 @@ void UQuickMaterialCreationWidget::DefaultCreateMaterialNodes(UMaterial* Created
 	DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("Failed to connect the texture: ") + SelectedTexture->GetName());
 }
 
+void UQuickMaterialCreationWidget::ORMCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter)
+{
+	UMaterialExpressionTextureSample* TextureSampleNode = NewObject<UMaterialExpressionTextureSample>(CreatedMaterial);
+	if (!TextureSampleNode)
+	{
+		return;
+	}
+
+	if (!CreatedMaterial->BaseColor.IsConnected())
+	{
+		if (TryConnectBaseColor(TextureSampleNode, SelectedTexture, CreatedMaterial))
+		{
+			++PinsConnectedCounter;
+			return;
+		}
+	}
+
+	if (!CreatedMaterial->Normal.IsConnected())
+	{
+		if (TryConnectNormal(TextureSampleNode, SelectedTexture, CreatedMaterial))
+		{
+			++PinsConnectedCounter;
+			return;
+		}
+	}
+
+	if (!CreatedMaterial->AmbientOcclusion.IsConnected() && !CreatedMaterial->Roughness.IsConnected() && !CreatedMaterial->Metallic.IsConnected())
+	{
+		if (TryConnectORM(TextureSampleNode, SelectedTexture, CreatedMaterial))
+		{
+			PinsConnectedCounter += 3;
+			return;
+		}
+	}
+
+	DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("Failed to connect the texture: ") + SelectedTexture->GetName());
+}
+
 bool UQuickMaterialCreationWidget::TryConnectBaseColor(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial)
 {
 	for (const FString& BaseColorName : BaseColorArray)
@@ -328,6 +389,34 @@ bool UQuickMaterialCreationWidget::TryConnectAmbientOcclusion(UMaterialExpressio
 
 			CreatedMaterial->Expressions.Add(TextureSampleNode);
 			CreatedMaterial->AmbientOcclusion.Expression = TextureSampleNode;
+			CreatedMaterial->PostEditChange();
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool UQuickMaterialCreationWidget::TryConnectORM(UMaterialExpressionTextureSample* TextureSampleNode, UTexture2D* SelectedTexture, UMaterial* CreatedMaterial)
+{
+	for (const FString& ORMName : ORMArray)
+	{
+		if (SelectedTexture->GetName().Contains(ORMName))
+		{
+			SelectedTexture->CompressionSettings = TextureCompressionSettings::TC_Masks;
+			SelectedTexture->SRGB = false;
+			SelectedTexture->PostEditChange();
+
+			TextureSampleNode->Texture = SelectedTexture;
+			TextureSampleNode->SamplerType = EMaterialSamplerType::SAMPLERTYPE_Masks;
+			TextureSampleNode->MaterialExpressionEditorX -= 600;
+			TextureSampleNode->MaterialExpressionEditorY += 960;
+
+			CreatedMaterial->Expressions.Add(TextureSampleNode);
+			CreatedMaterial->AmbientOcclusion.Connect(1, TextureSampleNode);
+			CreatedMaterial->Roughness.Connect(2, TextureSampleNode);
+			CreatedMaterial->Metallic.Connect(3, TextureSampleNode);
 			CreatedMaterial->PostEditChange();
 
 			return true;
