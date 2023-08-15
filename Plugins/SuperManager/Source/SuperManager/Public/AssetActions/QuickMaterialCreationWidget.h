@@ -21,5 +21,28 @@ public:
 	void CreateMaterialFromSelectedTextures();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
+	bool bCustomMaterialName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures", meta = (EditCondition = "bCustomMaterialName"))
 	FString MaterialName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> BaseColorArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> MetallicArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> RoughnessArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> NormalArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SupportedTextureNames")
+	TArray<FString> AmbientOcclusionArray;
+
+private:
+	bool ProcessSelectedData(const TArray<FAssetData>& SelectedDataToProcessArray, TArray<UTexture2D*>& OutSelectedTexturesArray, FString& OutSelectedTexturePackagePath);
+	bool CheckIsNameUsed(const FString& FolderPathToCheck, const FString& MaterialNameToCheck);
+	UMaterial* CreateMaterialAsset(const FString& NewMaterialAssetName, const FString& MaterialPath);
 };
