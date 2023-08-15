@@ -55,6 +55,20 @@ void SAdvancedDeletionTab::Construct(const FArguments& InArgs)
 			[
 				ConstructComboBox()
 			]
+
+			// Help Text for combo box slot
+			+SHorizontalBox::Slot()
+			.FillWidth(0.6f)
+			[
+				ConstructComboBoxHelpText(TEXT("Specify the listing condition in the drop down. Left mouse click to go to where the asset is located."), ETextJustify::Center)
+			]
+
+			// Help Text for folder path
+			+SHorizontalBox::Slot()
+			.FillWidth(0.1f)
+			[
+				ConstructComboBoxHelpText(TEXT("Current folder:\n") + InArgs._CurrentSelectedFolder, ETextJustify::Right)
+			]
 		]
 
 		// 3rd Slot for the asset list
@@ -428,4 +442,15 @@ void SAdvancedDeletionTab::OnComboBoxSelectionChanged(TSharedPtr<FString> Select
 		SuperManagerModule.ListSameNameAssetsForAssetList(StoredAssetsDataArray, DisplayedAssetsDataArray);
 		RefreshAssetListView();
 	}
+}
+
+TSharedRef<STextBlock> SAdvancedDeletionTab::ConstructComboBoxHelpText(const FString& TextContent, ETextJustify::Type TextJustify)
+{
+	TSharedRef<STextBlock> ConstructedHelpText =
+		SNew(STextBlock)
+		.Text(FText::FromString(TextContent))
+		.Justification(TextJustify)
+		.AutoWrapText(true);
+
+	return ConstructedHelpText;
 }

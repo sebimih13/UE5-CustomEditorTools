@@ -19,7 +19,7 @@ void FSuperManagerModule::StartupModule()
 
 void FSuperManagerModule::ShutdownModule()
 {
-
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("AdvancedDeletion"));
 }
 
 bool FSuperManagerModule::DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete)
@@ -350,6 +350,7 @@ TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpaw
 	[
 		SNew(SAdvancedDeletionTab)
 		.AssetsDataToStoreArray(GetAllAssetsDataUnderSelectedFolder())
+		.CurrentSelectedFolder(FoldersPathSelectedArray[0])		// TODO : maybe make this works for multiple folders
 	];
 }
 

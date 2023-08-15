@@ -8,6 +8,7 @@ class SAdvancedDeletionTab : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SAdvancedDeletionTab) { }
 	SLATE_ARGUMENT(TArray<TSharedPtr<FAssetData>>, AssetsDataToStoreArray)
+	SLATE_ARGUMENT(FString, CurrentSelectedFolder)
 	SLATE_END_ARGS()
 
 public:
@@ -41,6 +42,7 @@ private:
 	TSharedRef<SComboBox<TSharedPtr<FString>>> ConstructComboBox();
 	TSharedRef<SWidget> OnGenerateComboBoxContent(TSharedPtr<FString> SourceItem);
 	void OnComboBoxSelectionChanged(TSharedPtr<FString> SelectedOption, ESelectInfo::Type InSelectInfo);
+	TSharedRef<STextBlock> ConstructComboBoxHelpText(const FString& TextContent, ETextJustify::Type TextJustify);
 
 	/** Variables */
 	TSharedPtr<SListView<TSharedPtr<FAssetData>>> ConstructedAssetListView;
