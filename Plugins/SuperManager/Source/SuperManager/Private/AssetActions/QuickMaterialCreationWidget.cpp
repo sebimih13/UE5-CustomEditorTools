@@ -6,11 +6,14 @@
 #include "EditorAssetLibrary.h"
 #include "AssetToolsModule.h"
 #include "Factories/MaterialFactoryNew.h"
+#include "Materials/MaterialInstanceConstant.h"
+#include "Factories/MaterialInstanceConstantFactoryNew.h"
 
 UQuickMaterialCreationWidget::UQuickMaterialCreationWidget()
-	: bCustomMaterialName(true)
+	: ChannelPackingType(EChannelPackingType::ECPT_NoChannelPacking)
+	, bCreateMaterialInstance(false)
+	, bCustomMaterialName(true)
 	, MaterialName(TEXT("M_"))
-	, ChannelPackingType(EChannelPackingType::ECPT_NoChannelPacking)
 {
 	// Default values for Base Color Array
 	BaseColorArray.Add(TEXT("_BaseColor"));
@@ -60,11 +63,17 @@ void UQuickMaterialCreationWidget::CreateMaterialFromSelectedTextures()
 
 	if (!ProcessSelectedData(SelectedAssetsDataArray, SelectedTexturesArray, SelectedTextureFolderPath))
 	{
+		// Reset MaterialName
+		MaterialName = TEXT("M_");
+
 		return;
 	}
 
 	if (CheckIsNameUsed(SelectedTextureFolderPath, MaterialName))
 	{
+		// Reset MaterialName
+		MaterialName = TEXT("M_");
+
 		return;
 	}
 
@@ -105,6 +114,16 @@ void UQuickMaterialCreationWidget::CreateMaterialFromSelectedTextures()
 	if (PinsConnectedCounter > 0)
 	{
 		DebugHeader::ShowNotifyInfo(TEXT("Successfully connected ") + FString::FromInt(PinsConnectedCounter) + TEXT(" pins"));
+	}
+
+	if (bCreateMaterialInstance)
+	{
+		UMaterialInstanceConstant* CreatedMaterialInstance = CreateMaterialInstanceAsset(CreatedMaterial, SelectedTextureFolderPath);
+		if (!CreatedMaterialInstance)
+		{
+			DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("Failed to create material instance"));
+			return;
+		}
 	}
 
 	// Reset MaterialName
@@ -178,6 +197,27 @@ UMaterial* UQuickMaterialCreationWidget::CreateMaterialAsset(const FString& NewM
 	UObject* CreatedObject = AssetToolsModule.Get().CreateAsset(NewMaterialAssetName, MaterialPath, UMaterial::StaticClass(), NewObject<UMaterialFactoryNew>());
 
 	return Cast<UMaterial>(CreatedObject);
+}
+
+UMaterialInstanceConstant* UQuickMaterialCreationWidget::CreateMaterialInstanceAsset(UMaterial* MaterialParent, const FString& MaterialInstancePath)
+{
+	FString MaterialInstanceName = MaterialParent->GetName();
+	MaterialInstanceName.RemoveFromStart(TEXT("M_"));
+	MaterialInstanceName.InsertAt(0, TEXT("MI_"));
+
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+	UObject* CreatedObject = AssetToolsModule.Get().CreateAsset(MaterialInstanceName, MaterialInstancePath, UMaterialInstanceConstant::StaticClass(), NewObject<UMaterialInstanceConstantFactoryNew>());
+
+	if (UMaterialInstanceConstant* CreatedMaterialInstance = Cast<UMaterialInstanceConstant>(CreatedObject))
+	{
+		CreatedMaterialInstance->SetParentEditorOnly(MaterialParent);
+		CreatedMaterialInstance->PostEditChange();
+		MaterialParent->PostEditChange();
+		
+		return CreatedMaterialInstance;
+	}
+
+	return nullptr;
 }
 
 void UQuickMaterialCreationWidget::DefaultCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter)

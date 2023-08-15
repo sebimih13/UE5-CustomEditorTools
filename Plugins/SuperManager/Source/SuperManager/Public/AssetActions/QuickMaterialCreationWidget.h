@@ -6,6 +6,9 @@
 #include "EditorUtilityWidget.h"
 #include "QuickMaterialCreationWidget.generated.h"
 
+/** Forward Declarations */
+class UMaterialInstanceConstant;
+
 UENUM(BlueprintType)
 enum class EChannelPackingType : uint8
 {
@@ -30,6 +33,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
 	EChannelPackingType ChannelPackingType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
+	bool bCreateMaterialInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
 	bool bCustomMaterialName;
@@ -59,6 +65,7 @@ private:
 	bool ProcessSelectedData(const TArray<FAssetData>& SelectedDataToProcessArray, TArray<UTexture2D*>& OutSelectedTexturesArray, FString& OutSelectedTexturePackagePath);
 	bool CheckIsNameUsed(const FString& FolderPathToCheck, const FString& MaterialNameToCheck);
 	UMaterial* CreateMaterialAsset(const FString& NewMaterialAssetName, const FString& MaterialPath);
+	UMaterialInstanceConstant* CreateMaterialInstanceAsset(UMaterial* MaterialParent, const FString& MaterialInstancePath);
 
 	void DefaultCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter);
 	void ORMCreateMaterialNodes(UMaterial* CreatedMaterial, UTexture2D* SelectedTexture, uint32& PinsConnectedCounter);
