@@ -358,20 +358,31 @@ void FSuperManagerModule::UnregisterAdvancedDeletionTab()
 
 TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	return 
-	SNew(SDockTab).TabRole(ETabRole::NomadTab)
-	[
-		SNew(SAdvancedDeletionTab)
-		.AssetsDataToStoreArray(GetAllAssetsDataUnderSelectedFolder())
-		.CurrentSelectedFolder(FoldersPathSelectedArray[0])		// TODO : maybe make this works for multiple folders
-	];
+	if (FoldersPathSelectedArray.Num() == 0)
+	{
+		DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("You must right click on a folder from Content Browser"));
+		return
+			SNew(SDockTab)
+			.TabRole(ETabRole::NomadTab);
+	}
+
+	TSharedRef<SDockTab> CreatedAdvancedDeletionTab = 
+		SNew(SDockTab)
+		.TabRole(ETabRole::NomadTab)
+		[
+			SNew(SAdvancedDeletionTab)
+			.AssetsDataToStoreArray(GetAllAssetsDataUnderSelectedFolder())
+			.CurrentSelectedFolder(FoldersPathSelectedArray[0])
+		];
+
+	return CreatedAdvancedDeletionTab;
 }
 
 TArray<TSharedPtr<FAssetData>> FSuperManagerModule::GetAllAssetsDataUnderSelectedFolder()
 {
 	TArray<TSharedPtr<FAssetData>> AvailableAssetsDataArray;
 
-	TArray<FString> AssetsPathNameArray = UEditorAssetLibrary::ListAssets(FoldersPathSelectedArray[0]);		// TODO : for all selected folders
+	TArray<FString> AssetsPathNameArray = UEditorAssetLibrary::ListAssets(FoldersPathSelectedArray[0]);
 	for (const FString& AssetPathName : AssetsPathNameArray)
 	{
 		// Don't touch the root folder
