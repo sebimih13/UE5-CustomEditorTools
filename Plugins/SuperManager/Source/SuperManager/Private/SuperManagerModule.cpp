@@ -12,6 +12,7 @@
 #include "LevelEditor.h"
 #include "Engine/Selection.h"
 #include "Subsystems/EditorActorSubsystem.h"
+#include "CustomUICommands/SuperManagerUICommands.h"
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
@@ -21,6 +22,9 @@ void FSuperManagerModule::StartupModule()
 
 	InitContentBrowserMenuExtension();
 	RegisterAdvancedDeletionTab();
+
+	FSuperManagerUICommands::Register();
+	InitCustomUICommands();
 
 	InitLevelEditorMenuExtension();
 	InitCustomSelectionEvent();
@@ -418,6 +422,10 @@ void FSuperManagerModule::InitLevelEditorMenuExtension()
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
 	TArray<FLevelEditorModule::FLevelViewportMenuExtender_SelectedActors>& LevelEditorMenuExtenders = LevelEditorModule.GetAllLevelViewportContextMenuExtenders();
 
+	// Add the new custom commands
+	TSharedRef<FUICommandList> ExistingLevelCommands = LevelEditorModule.GetGlobalLevelEditorActions();
+	ExistingLevelCommands->Append(CustomUICommands.ToSharedRef());
+
 	// Add a new custom delegate
 	LevelEditorMenuExtenders.Add(FLevelEditorModule::FLevelViewportMenuExtender_SelectedActors::CreateRaw(this, &FSuperManagerModule::CustomLevelEditorMenuExtender));
 }
@@ -593,6 +601,23 @@ bool FSuperManagerModule::GetEditorActorSubsystem()
 	}
 
 	return WeakEditorActorSubsystem.IsValid();
+}
+
+void FSuperManagerModule::InitCustomUICommands()
+{
+	CustomUICommands = MakeShareable(new FUICommandList());
+	CustomUICommands->MapAction(FSuperManagerUICommands::Get().LockActorSelection, FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnLockActorSelectionHotKeyPressed));
+	CustomUICommands->MapAction(FSuperManagerUICommands::Get().UnlockActorSelection, FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnUnlockActorSelectionHotKeyPressed));
+}
+
+void FSuperManagerModule::OnLockActorSelectionHotKeyPressed()
+{
+	OnLockActorSelectionButtonClicked();
+}
+
+void FSuperManagerModule::OnUnlockActorSelectionHotKeyPressed()
+{
+	OnUnlockActorSelectionButtonClicked();
 }
 
 #undef LOCTEXT_NAMESPACE

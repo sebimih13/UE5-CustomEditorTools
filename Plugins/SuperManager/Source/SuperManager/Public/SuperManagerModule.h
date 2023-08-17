@@ -8,6 +8,7 @@
 /** Forward Declarations */
 class FMenuBuilder;
 class UEditorActorSubsystem;
+class FUICommandList;
 
 class FSuperManagerModule : public IModuleInterface
 {
@@ -63,4 +64,11 @@ private:
 	TWeakObjectPtr<UEditorActorSubsystem> WeakEditorActorSubsystem;
 	
 	bool GetEditorActorSubsystem();
+
+	/** Custom Editor UI Commands */
+	void InitCustomUICommands();
+	void OnLockActorSelectionHotKeyPressed();
+	void OnUnlockActorSelectionHotKeyPressed();
+
+	TSharedPtr<FUICommandList> CustomUICommands;
 };
