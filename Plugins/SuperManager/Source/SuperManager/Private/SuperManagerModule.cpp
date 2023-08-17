@@ -9,14 +9,21 @@
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AdvancedDeletionWidget.h"
 #include "CustomStyle/SuperManagerStyle.h"
+#include "LevelEditor.h"
+#include "Engine/Selection.h"
+#include "Subsystems/EditorActorSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
 void FSuperManagerModule::StartupModule()
 {
 	FSuperManagerStyle::InitializeIcons();
+
 	InitContentBrowserMenuExtension();
 	RegisterAdvancedDeletionTab();
+
+	InitLevelEditorMenuExtension();
+	InitCustomSelectionEvent();
 }
 
 void FSuperManagerModule::ShutdownModule()
@@ -110,7 +117,7 @@ void FSuperManagerModule::InitContentBrowserMenuExtension()
 
 TSharedRef<FExtender> FSuperManagerModule::CustomContentBrowserMenuExtender(const TArray<FString>& SelectedPaths)
 {
-	TSharedRef<FExtender> MenuExtender(new FExtender());
+	TSharedRef<FExtender> MenuExtender = MakeShareable(new FExtender());
 
 	if (SelectedPaths.Num() > 0)
 	{
@@ -403,6 +410,189 @@ TArray<TSharedPtr<FAssetData>> FSuperManagerModule::GetAllAssetsDataUnderSelecte
 	}
 
 	return AvailableAssetsDataArray;
+}
+
+void FSuperManagerModule::InitLevelEditorMenuExtension()
+{
+	// Get all menu extenders
+	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
+	TArray<FLevelEditorModule::FLevelViewportMenuExtender_SelectedActors>& LevelEditorMenuExtenders = LevelEditorModule.GetAllLevelViewportContextMenuExtenders();
+
+	// Add a new custom delegate
+	LevelEditorMenuExtenders.Add(FLevelEditorModule::FLevelViewportMenuExtender_SelectedActors::CreateRaw(this, &FSuperManagerModule::CustomLevelEditorMenuExtender));
+}
+
+TSharedRef<FExtender> FSuperManagerModule::CustomLevelEditorMenuExtender(const TSharedRef<FUICommandList> UICommandList, const TArray<AActor*> SelectedActorsArray)
+{
+	TSharedRef<FExtender> MenuExtender = MakeShareable(new FExtender());
+
+	if (SelectedActorsArray.Num() > 0)
+	{
+		MenuExtender->AddMenuExtension(TEXT("ActorOptions"), EExtensionHook::Before, UICommandList, FMenuExtensionDelegate::CreateRaw(this, &FSuperManagerModule::AddLevelEditorMenuEntry));
+	}
+
+	return MenuExtender;
+}
+
+void FSuperManagerModule::AddLevelEditorMenuEntry(FMenuBuilder& MenuBuilder)
+{
+	// Lock Actor Selection
+	MenuBuilder.AddMenuEntry
+	(
+		FText::FromString(TEXT("Lock actor selection")),
+		FText::FromString(TEXT("Prevent actor from being selected")),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.SelectionLock"),
+		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnLockActorSelectionButtonClicked)
+	);
+
+	// Unlock Actor Selection
+	MenuBuilder.AddMenuEntry(
+		FText::FromString(TEXT("Unlock actor selection")),
+		FText::FromString(TEXT("Remove the selection constraint on this actor")),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.SelectionUnlock"),
+		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnUnlockActorSelectionButtonClicked)
+	);
+}
+
+void FSuperManagerModule::OnLockActorSelectionButtonClicked()
+{
+	if (!GetEditorActorSubsystem())
+	{
+		return;
+	}
+
+	TArray<AActor*> SelectedActorsArray = WeakEditorActorSubsystem->GetSelectedLevelActors();
+	if (SelectedActorsArray.Num() == 0)
+	{
+		DebugHeader::ShowNotifyInfo(TEXT("No actor selected"));
+		return;
+	}
+
+	FString CurrentLockedActorsNames = TEXT("Locked selection for:");
+	for (AActor* SelectedActor : SelectedActorsArray)
+	{
+		if (!SelectedActor)
+		{
+			return;
+		}
+
+		LockActorSelection(SelectedActor);
+		WeakEditorActorSubsystem->SetActorSelectionState(SelectedActor, false);
+
+		CurrentLockedActorsNames.Append(TEXT("\n"));
+		CurrentLockedActorsNames.Append(SelectedActor->GetActorLabel());
+	}
+
+	DebugHeader::ShowNotifyInfo(CurrentLockedActorsNames);
+}
+
+void FSuperManagerModule::OnUnlockActorSelectionButtonClicked()
+{
+	if (!GetEditorActorSubsystem())
+	{
+		return;
+	}
+
+	TArray<AActor*> AllLevelActorsArray = WeakEditorActorSubsystem->GetAllLevelActors();
+	TArray<AActor*> AllLockedActorsArray;
+
+	for (AActor* LevelActor : AllLevelActorsArray)
+	{
+		if (!LevelActor)
+		{
+			return;
+		}
+
+		if (CheckIsActorSelectionLocked(LevelActor))
+		{
+			AllLockedActorsArray.Add(LevelActor);
+		}
+	}
+
+	if (AllLockedActorsArray.Num() == 0)
+	{
+		DebugHeader::ShowNotifyInfo(TEXT("No selection locked actor"));
+	}
+
+	FString UnlockedActorsNames = TEXT("Lifted selection constraint for:");
+	for (AActor* LockedActor : AllLockedActorsArray)
+	{
+		UnlockActorSelection(LockedActor);
+
+		UnlockedActorsNames.Append(TEXT("\n"));
+		UnlockedActorsNames.Append(LockedActor->GetActorLabel());
+	}
+
+	DebugHeader::ShowNotifyInfo(UnlockedActorsNames);
+}
+
+void FSuperManagerModule::InitCustomSelectionEvent()
+{
+	USelection* UserSelection = GEditor->GetSelectedActors();
+	UserSelection->SelectObjectEvent.AddRaw(this, &FSuperManagerModule::OnActorSelected);
+}
+
+void FSuperManagerModule::OnActorSelected(UObject* SelectedObject)
+{
+	if (!GetEditorActorSubsystem())
+	{
+		return;
+	}
+
+	if (AActor* SelectedActor = Cast<AActor>(SelectedObject))
+	{
+		if (CheckIsActorSelectionLocked(SelectedActor))
+		{
+			// Deselect the actor
+			WeakEditorActorSubsystem->SetActorSelectionState(SelectedActor, false);
+		}
+	}
+}
+
+void FSuperManagerModule::LockActorSelection(AActor* ActorToProcess)
+{
+	if (!ActorToProcess)
+	{
+		return;
+	}
+
+	if (!ActorToProcess->ActorHasTag(FName("Locked")))
+	{
+		ActorToProcess->Tags.Add(FName("Locked"));
+	}
+}
+
+void FSuperManagerModule::UnlockActorSelection(AActor* ActorToProcess)
+{
+	if (!ActorToProcess)
+	{
+		return;
+	}
+
+	if (ActorToProcess->ActorHasTag(FName("Locked")))
+	{
+		ActorToProcess->Tags.Remove(FName("Locked"));
+	}
+}
+
+bool FSuperManagerModule::CheckIsActorSelectionLocked(AActor* ActorToProcess)
+{
+	if (!ActorToProcess)
+	{
+		return false;
+	}
+
+	return ActorToProcess->ActorHasTag(FName("Locked"));
+}
+
+bool FSuperManagerModule::GetEditorActorSubsystem()
+{
+	if (!WeakEditorActorSubsystem.IsValid())
+	{
+		WeakEditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+	}
+
+	return WeakEditorActorSubsystem.IsValid();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -7,6 +7,7 @@
 
 /** Forward Declarations */
 class FMenuBuilder;
+class UEditorActorSubsystem;
 
 class FSuperManagerModule : public IModuleInterface
 {
@@ -16,7 +17,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	/** ProcessDataForAdvancedDeletionTab */
+	/** Process Data For Advanced Deletion Tab */
 	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
 	bool DeleteMultipleAssetsForAssetList(const TArray<FAssetData>& AssetsDataToDeleteArray);
 	void ListUnusedAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutUnusedAssetsData);
@@ -26,7 +27,6 @@ public:
 private:
 	/** ContentBrowserMenuExtension */
 	void InitContentBrowserMenuExtension();
-
 	TSharedRef<FExtender> CustomContentBrowserMenuExtender(const TArray<FString>& SelectedPaths);
 	void AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder);
 	
@@ -38,9 +38,29 @@ private:
 
 	TArray<FString> FoldersPathSelectedArray;
 
-	/** CustomEditorTab */
+	/** Custom Editor Tab */
 	void RegisterAdvancedDeletionTab();
 	void UnregisterAdvancedDeletionTab();
 	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
 	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
+
+	/** Level Editor Menu Extension */
+	void InitLevelEditorMenuExtension();
+	TSharedRef<FExtender> CustomLevelEditorMenuExtender(const TSharedRef<FUICommandList> UICommandList, const TArray<AActor*> SelectedActorsArray);
+	void AddLevelEditorMenuEntry(FMenuBuilder& MenuBuilder);
+
+	void OnLockActorSelectionButtonClicked();
+	void OnUnlockActorSelectionButtonClicked();
+
+	/** Selection Lock */
+	void InitCustomSelectionEvent();
+	void OnActorSelected(UObject* SelectedObject);
+
+	void LockActorSelection(AActor* ActorToProcess);
+	void UnlockActorSelection(AActor* ActorToProcess);
+	bool CheckIsActorSelectionLocked(AActor* ActorToProcess);
+
+	TWeakObjectPtr<UEditorActorSubsystem> WeakEditorActorSubsystem;
+	
+	bool GetEditorActorSubsystem();
 };

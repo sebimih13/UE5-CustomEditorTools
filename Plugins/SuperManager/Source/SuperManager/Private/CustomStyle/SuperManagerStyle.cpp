@@ -37,6 +37,8 @@ TSharedRef<FSlateStyleSet> FSuperManagerStyle::CreateSlateStyleSet()
 	CustomStyleSet->Set("ContentBrowser.DeleteUnusedAssets", new FSlateImageBrush(ResourcesDirectory/"DeleteUnusedAsset.png", Icon16x16));
 	CustomStyleSet->Set("ContentBrowser.DeleteEmptyFolders", new FSlateImageBrush(ResourcesDirectory/"DeleteEmptyFolders.png", Icon16x16));
 	CustomStyleSet->Set("ContentBrowser.AdvancedDeletion", new FSlateImageBrush(ResourcesDirectory/"AdvancedDeletion.png", Icon16x16));
+	CustomStyleSet->Set("ContentBrowser.SelectionLock", new FSlateImageBrush(ResourcesDirectory/"SelectionLock.png", Icon16x16));
+	CustomStyleSet->Set("ContentBrowser.SelectionUnlock", new FSlateImageBrush(ResourcesDirectory/"SelectionUnlock.png", Icon16x16));
 
 	return CustomStyleSet;
 }
