@@ -32,6 +32,7 @@ void FSuperManagerModule::StartupModule()
 
 void FSuperManagerModule::ShutdownModule()
 {
+	FSuperManagerUICommands::Unregister();
 	UnregisterAdvancedDeletionTab();
 	FSuperManagerStyle::Shutdown();
 }
