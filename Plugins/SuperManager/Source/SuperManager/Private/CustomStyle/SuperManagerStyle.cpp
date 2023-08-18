@@ -3,6 +3,7 @@
 #include "CustomStyle/SuperManagerStyle.h"
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Styling/StyleColors.h"
 
 // Initialize static variables
 const FName FSuperManagerStyle::StyleSetName = FName("SuperManagerStyle");
@@ -37,8 +38,24 @@ TSharedRef<FSlateStyleSet> FSuperManagerStyle::CreateSlateStyleSet()
 	CustomStyleSet->Set("ContentBrowser.DeleteUnusedAssets", new FSlateImageBrush(ResourcesDirectory/"DeleteUnusedAsset.png", Icon16x16));
 	CustomStyleSet->Set("ContentBrowser.DeleteEmptyFolders", new FSlateImageBrush(ResourcesDirectory/"DeleteEmptyFolders.png", Icon16x16));
 	CustomStyleSet->Set("ContentBrowser.AdvancedDeletion", new FSlateImageBrush(ResourcesDirectory/"AdvancedDeletion.png", Icon16x16));
-	CustomStyleSet->Set("ContentBrowser.SelectionLock", new FSlateImageBrush(ResourcesDirectory/"SelectionLock.png", Icon16x16));
-	CustomStyleSet->Set("ContentBrowser.SelectionUnlock", new FSlateImageBrush(ResourcesDirectory/"SelectionUnlock.png", Icon16x16));
+	CustomStyleSet->Set("LevelEditor.SelectionLock", new FSlateImageBrush(ResourcesDirectory/"SelectionLock.png", Icon16x16));
+	CustomStyleSet->Set("LevelEditor.SelectionUnlock", new FSlateImageBrush(ResourcesDirectory/"SelectionUnlock.png", Icon16x16));
+
+	// Selection Lock toggle button style
+	const FCheckBoxStyle SelectionLockToggleButtonStyle = 
+		FCheckBoxStyle()
+		.SetCheckBoxType(ESlateCheckBoxType::ToggleButton)
+		.SetPadding(FMargin(10.0f))
+		// Unchecked image
+		.SetUncheckedImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::White25))
+		.SetUncheckedHoveredImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::AccentBlue))
+		.SetUncheckedPressedImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::Foreground))
+		// Checked image
+		.SetCheckedImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::Foreground))
+		.SetCheckedHoveredImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::AccentBlack))
+		.SetCheckedPressedImage(FSlateImageBrush(ResourcesDirectory / "SelectionLock.png", Icon16x16, EStyleColor::AccentGray));
+
+	CustomStyleSet->Set(FName("SceneOutliner.SelectionLock"), SelectionLockToggleButtonStyle);
 
 	return CustomStyleSet;
 }

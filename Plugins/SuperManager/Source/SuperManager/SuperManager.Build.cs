@@ -29,6 +29,7 @@ public class SuperManager : ModuleRules
                 "Blutility",
 				"UMG",
                 "Niagara",
+                "SceneOutliner"
             }
 		);
 

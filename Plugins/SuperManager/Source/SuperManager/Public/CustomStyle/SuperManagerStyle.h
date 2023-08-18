@@ -11,6 +11,7 @@ public:
 	static void Shutdown();
 
 	FORCEINLINE static FName GetStyleSetName() { return StyleSetName; }
+	FORCEINLINE static TSharedRef<FSlateStyleSet> GetCreatedSlateStyleSet() { return CreatedSlateStyleSet.ToSharedRef(); }
 
 private:
 	static TSharedRef<FSlateStyleSet> CreateSlateStyleSet();

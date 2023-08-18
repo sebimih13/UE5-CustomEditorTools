@@ -9,6 +9,8 @@
 class FMenuBuilder;
 class UEditorActorSubsystem;
 class FUICommandList;
+class ISceneOutliner;
+class ISceneOutlinerColumn;
 
 class FSuperManagerModule : public IModuleInterface
 {
@@ -24,6 +26,9 @@ public:
 	void ListUnusedAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutUnusedAssetsData);
 	void ListSameNameAssetsForAssetList(const TArray<TSharedPtr<FAssetData>>& AssetsDataToFilter, TArray<TSharedPtr<FAssetData>>& OutSameNameAssetsData);
 	void SyncContentBrowserToClickedAssetForAssetList(const FString& AssetPathToSync);
+
+	bool CheckIsActorSelectionLocked(AActor* ActorToProcess);
+	void ProcessLockingForOutliner(AActor* ActorToProcess, bool bShouldLock);
 
 private:
 	/** ContentBrowserMenuExtension */
@@ -59,7 +64,8 @@ private:
 
 	void LockActorSelection(AActor* ActorToProcess);
 	void UnlockActorSelection(AActor* ActorToProcess);
-	bool CheckIsActorSelectionLocked(AActor* ActorToProcess);
+
+	void RefreshSceneOutliner();
 
 	TWeakObjectPtr<UEditorActorSubsystem> WeakEditorActorSubsystem;
 	
@@ -71,4 +77,10 @@ private:
 	void OnUnlockActorSelectionHotKeyPressed();
 
 	TSharedPtr<FUICommandList> CustomUICommands;
+
+	/** Scene Outliner Extension */
+	void InitSceneOutlinerColumnExtension();
+	void UnregisterSceneOutlinerColumnExtension();
+
+	TSharedRef<ISceneOutlinerColumn> OnCreateSelectionLockColumn(ISceneOutliner& SceneOutliner);
 };

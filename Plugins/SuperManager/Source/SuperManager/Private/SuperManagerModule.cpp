@@ -13,6 +13,8 @@
 #include "Engine/Selection.h"
 #include "Subsystems/EditorActorSubsystem.h"
 #include "CustomUICommands/SuperManagerUICommands.h"
+#include "SceneOutlinerModule.h"
+#include "CustomWorldOutliner/OutlinerSelectionColumn.h"
 
 #define LOCTEXT_NAMESPACE "FSuperManagerModule"
 
@@ -28,10 +30,13 @@ void FSuperManagerModule::StartupModule()
 
 	InitLevelEditorMenuExtension();
 	InitCustomSelectionEvent();
+
+	InitSceneOutlinerColumnExtension();
 }
 
 void FSuperManagerModule::ShutdownModule()
 {
+	UnregisterSceneOutlinerColumnExtension();
 	FSuperManagerUICommands::Unregister();
 	UnregisterAdvancedDeletionTab();
 	FSuperManagerStyle::Shutdown();
@@ -108,6 +113,37 @@ void FSuperManagerModule::SyncContentBrowserToClickedAssetForAssetList(const FSt
 	TArray<FString> AssetsPathToSync;
 	AssetsPathToSync.Add(AssetPathToSync);
 	UEditorAssetLibrary::SyncBrowserToObjects(AssetsPathToSync);
+}
+
+bool FSuperManagerModule::CheckIsActorSelectionLocked(AActor* ActorToProcess)
+{
+	if (!ActorToProcess)
+	{
+		return false;
+	}
+
+	return ActorToProcess->ActorHasTag(FName("Locked"));
+}
+
+void FSuperManagerModule::ProcessLockingForOutliner(AActor* ActorToProcess, bool bShouldLock)
+{
+	if (!GetEditorActorSubsystem())
+	{
+		return;
+	}
+
+	if (bShouldLock)
+	{
+		LockActorSelection(ActorToProcess);
+		WeakEditorActorSubsystem->SetActorSelectionState(ActorToProcess, false);
+
+		DebugHeader::ShowNotifyInfo(TEXT("Locked selection for:\n") + ActorToProcess->GetActorLabel());
+	}
+	else
+	{
+		UnlockActorSelection(ActorToProcess);
+		DebugHeader::ShowNotifyInfo(TEXT("Remove selection lock for:\n") + ActorToProcess->GetActorLabel());
+	}
 }
 
 void FSuperManagerModule::InitContentBrowserMenuExtension()
@@ -450,7 +486,7 @@ void FSuperManagerModule::AddLevelEditorMenuEntry(FMenuBuilder& MenuBuilder)
 	(
 		FText::FromString(TEXT("Lock actor selection")),
 		FText::FromString(TEXT("Prevent actor from being selected")),
-		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.SelectionLock"),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "LevelEditor.SelectionLock"),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnLockActorSelectionButtonClicked)
 	);
 
@@ -458,7 +494,7 @@ void FSuperManagerModule::AddLevelEditorMenuEntry(FMenuBuilder& MenuBuilder)
 	MenuBuilder.AddMenuEntry(
 		FText::FromString(TEXT("Unlock actor selection")),
 		FText::FromString(TEXT("Remove the selection constraint on this actor")),
-		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "ContentBrowser.SelectionUnlock"),
+		FSlateIcon(FSuperManagerStyle::GetStyleSetName(), "LevelEditor.SelectionUnlock"),
 		FExecuteAction::CreateRaw(this, &FSuperManagerModule::OnUnlockActorSelectionButtonClicked)
 	);
 }
@@ -492,6 +528,7 @@ void FSuperManagerModule::OnLockActorSelectionButtonClicked()
 		CurrentLockedActorsNames.Append(SelectedActor->GetActorLabel());
 	}
 
+	RefreshSceneOutliner();
 	DebugHeader::ShowNotifyInfo(CurrentLockedActorsNames);
 }
 
@@ -521,6 +558,7 @@ void FSuperManagerModule::OnUnlockActorSelectionButtonClicked()
 	if (AllLockedActorsArray.Num() == 0)
 	{
 		DebugHeader::ShowNotifyInfo(TEXT("No selection locked actor"));
+		return;
 	}
 
 	FString UnlockedActorsNames = TEXT("Lifted selection constraint for:");
@@ -532,6 +570,7 @@ void FSuperManagerModule::OnUnlockActorSelectionButtonClicked()
 		UnlockedActorsNames.Append(LockedActor->GetActorLabel());
 	}
 
+	RefreshSceneOutliner();
 	DebugHeader::ShowNotifyInfo(UnlockedActorsNames);
 }
 
@@ -584,14 +623,15 @@ void FSuperManagerModule::UnlockActorSelection(AActor* ActorToProcess)
 	}
 }
 
-bool FSuperManagerModule::CheckIsActorSelectionLocked(AActor* ActorToProcess)
+void FSuperManagerModule::RefreshSceneOutliner()
 {
-	if (!ActorToProcess)
-	{
-		return false;
-	}
+	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
 
-	return ActorToProcess->ActorHasTag(FName("Locked"));
+	TSharedPtr<ISceneOutliner> SceneOutliner = LevelEditorModule.GetFirstLevelEditor()->GetSceneOutliner();
+	if (SceneOutliner)
+	{
+		SceneOutliner->FullRefresh();
+	}
 }
 
 bool FSuperManagerModule::GetEditorActorSubsystem()
@@ -619,6 +659,30 @@ void FSuperManagerModule::OnLockActorSelectionHotKeyPressed()
 void FSuperManagerModule::OnUnlockActorSelectionHotKeyPressed()
 {
 	OnUnlockActorSelectionButtonClicked();
+}
+
+void FSuperManagerModule::InitSceneOutlinerColumnExtension()
+{
+	FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
+
+	FSceneOutlinerColumnInfo SelectionLockColumnInfo(
+		ESceneOutlinerColumnVisibility::Visible,
+		1,
+		FCreateSceneOutlinerColumn::CreateRaw(this, &FSuperManagerModule::OnCreateSelectionLockColumn)
+	);
+
+	SceneOutlinerModule.RegisterDefaultColumnType<FOutlinerSelectionLockColumn>(SelectionLockColumnInfo);
+}
+
+void FSuperManagerModule::UnregisterSceneOutlinerColumnExtension()
+{
+	FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
+	SceneOutlinerModule.UnRegisterColumnType<FOutlinerSelectionLockColumn>();
+}
+
+TSharedRef<ISceneOutlinerColumn> FSuperManagerModule::OnCreateSelectionLockColumn(ISceneOutliner& SceneOutliner)
+{
+	return MakeShareable(new FOutlinerSelectionLockColumn(SceneOutliner));
 }
 
 #undef LOCTEXT_NAMESPACE
