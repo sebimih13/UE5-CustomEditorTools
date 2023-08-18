@@ -200,6 +200,12 @@ void FSuperManagerModule::AddContentBrowserMenuEntry(FMenuBuilder& MenuBuilder)
 
 void FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked()
 {
+	if (AdvancedDeletionTab.IsValid())
+	{
+		DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("Please close Advanced Deletion Tab before this operation"));
+		return;
+	}
+
 	if (FoldersPathSelectedArray.Num() > 1)
 	{
 		DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("You can only do this to one folder"));
@@ -263,6 +269,12 @@ void FSuperManagerModule::OnDeleteUnusedAssetsButtonClicked()
 
 void FSuperManagerModule::OnDeleteEmptyFoldersButtonClicked()
 {
+	if (AdvancedDeletionTab.IsValid())
+	{
+		DebugHeader::ShowMsgDialog(EAppMsgType::Ok, TEXT("Please close Advanced Deletion Tab before this operation"));
+		return;
+	}
+
 	FixUpRedirectors();
 
 	FString EmptyFoldersPathsNames;
@@ -414,7 +426,7 @@ TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpaw
 			.TabRole(ETabRole::NomadTab);
 	}
 
-	TSharedRef<SDockTab> CreatedAdvancedDeletionTab = 
+	AdvancedDeletionTab =
 		SNew(SDockTab)
 		.TabRole(ETabRole::NomadTab)
 		[
@@ -423,7 +435,17 @@ TSharedRef<SDockTab> FSuperManagerModule::OnSpawnAdvancedDeletionTab(const FSpaw
 			.CurrentSelectedFolder(FoldersPathSelectedArray[0])
 		];
 
-	return CreatedAdvancedDeletionTab;
+	AdvancedDeletionTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FSuperManagerModule::OnAdvancedDeletionTabClosed));
+	return AdvancedDeletionTab.ToSharedRef();
+}
+
+void FSuperManagerModule::OnAdvancedDeletionTabClosed(TSharedRef<SDockTab> TabToClose)
+{
+	if (AdvancedDeletionTab)
+	{
+		AdvancedDeletionTab.Reset();
+		FoldersPathSelectedArray.Empty();
+	}
 }
 
 TArray<TSharedPtr<FAssetData>> FSuperManagerModule::GetAllAssetsDataUnderSelectedFolder()

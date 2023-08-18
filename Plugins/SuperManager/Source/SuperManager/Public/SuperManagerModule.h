@@ -48,7 +48,10 @@ private:
 	void RegisterAdvancedDeletionTab();
 	void UnregisterAdvancedDeletionTab();
 	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
+	void OnAdvancedDeletionTabClosed(TSharedRef<SDockTab> TabToClose);
 	TArray<TSharedPtr<FAssetData>> GetAllAssetsDataUnderSelectedFolder();
+
+	TSharedPtr<SDockTab> AdvancedDeletionTab;
 
 	/** Level Editor Menu Extension */
 	void InitLevelEditorMenuExtension();

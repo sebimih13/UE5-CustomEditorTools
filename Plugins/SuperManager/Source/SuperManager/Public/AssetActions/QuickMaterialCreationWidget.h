@@ -28,7 +28,7 @@ class SUPERMANAGER_API UQuickMaterialCreationWidget : public UEditorUtilityWidge
 public:
 	UQuickMaterialCreationWidget();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "CreateMaterialFromSelectedTextures")
 	void CreateMaterialFromSelectedTextures();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CreateMaterialFromSelectedTextures")
