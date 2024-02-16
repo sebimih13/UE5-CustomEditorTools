@@ -12,7 +12,6 @@ Custom Editor Tools for Unreal Engine 5.0.3
 <img src="https://github.com/sebimih13/UE5-CustomEditorTools/blob/main/GitResources/delete_unused_assets.gif">
 <img src="https://github.com/sebimih13/UE5-CustomEditorTools/blob/main/GitResources/duplicate_asset.gif">
 <img src="https://github.com/sebimih13/UE5-CustomEditorTools/blob/main/GitResources/prefix_asset.gif">
-<img src="">
 <br>
 
 ## Folder Actions
